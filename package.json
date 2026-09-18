@@ -1,0 +1,11 @@
+{
+  "name": "sistema-integrado-dga-opp-unt",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "node api/server.mjs",
+    "test": "node tests/smoke.mjs",
+    "check": "node --check assets/js/app.js && node --check assets/js/model.js && node --check assets/js/api.js && node --check api/server.mjs"
+  }
+}

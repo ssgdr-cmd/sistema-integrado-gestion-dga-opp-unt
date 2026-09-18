@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: Sistema Integrado de Gestión DGA–OPP UNT API
+  version: 4.0.0
+  description: >
+    Contrato REST para organización jerárquica, personas, asistencia, mesa documental,
+    presupuesto por centro de costo, simulación y recomendación de financiamiento,
+    inversiones, expedientes, procesos y asistente contextual.
+servers:
+  - url: http://localhost:8787/api/v1
+paths:
+  /health:
+    get:
+      summary: Estado del servicio
+      responses: {'200': {description: Disponible}}
+  /bootstrap:
+    get:
+      summary: Contexto inicial según perfil y ámbito autorizado
+      parameters:
+        - {in: query, name: profileId, schema: {type: string, example: USR-ADMIN}}
+      responses: {'200': {description: Perfil, unidades, personas y centros visibles}}
+  /dashboard:
+    get:
+      summary: Dashboard jerárquico e integral
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+      responses: {'200': {description: Métricas operativas, financieras, asistencia, tareas y alertas}}
+  /organization:
+    get:
+      summary: Árbol navegable DGA–OPP
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+      responses: {'200': {description: Unidades, áreas, subáreas, responsables y personal}}
+  /unit:
+    get:
+      summary: Detalle de unidad, área o subárea
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: unitId, required: true, schema: {type: string}}
+      responses: {'200': {description: Responsable, equipo, asistencia, presupuesto, tareas, productos y subunidades}}
+  /person:
+    get:
+      summary: Mesa de trabajo de un servidor
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: personId, required: true, schema: {type: string}}
+        - {in: query, name: month, schema: {type: string, example: 2026-09}}
+      responses: {'200': {description: Metas, tareas, asistencia, documentos y agenda}}
+  /attendance:
+    get:
+      summary: Asistencia diaria, incidencias y resumen mensual
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: unitId, schema: {type: string}}
+        - {in: query, name: personId, schema: {type: string}}
+        - {in: query, name: month, schema: {type: string, example: 2026-09}}
+      responses: {'200': {description: Marcaciones e incidencias del ámbito autorizado}}
+  /budget:
+    get:
+      summary: Ejecución presupuestaria del ámbito autorizado
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+      responses: {'200': {description: PIA, PIM, certificación, compromiso, devengado, pago, proyección y centros de costo}}
+  /cost-centers:
+    get:
+      summary: Centros de costo visibles
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+      responses: {'200': {description: Centros y ejecución}}
+  /cost-center:
+    get:
+      summary: Modelo completo de un centro de costo
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: code, required: true, schema: {type: string, example: '1.10.04'}}
+      responses:
+        '200': {description: Clasificadores, fuente/rubro, POI, obligaciones, margen y proyección}
+        '403': {description: Fuera del ámbito autorizado}
+  /budget/simulate:
+    post:
+      summary: Simulador compatible con la capa presupuestaria anterior
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceId, destinationId, amount]
+              properties:
+                sourceId: {type: string, example: BC-01}
+                destinationId: {type: string, example: INV-001}
+                amount: {type: number, example: 0.30}
+      responses: {'200': {description: Clasificación, controles e impacto}}
+  /budget/recommend-funding:
+    post:
+      summary: Ranking de fuentes potenciales para cubrir una necesidad
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                profileId: {type: string}
+                amount: {type: number, example: 0.50, description: Millones de soles}
+                targetCode: {type: string, example: '1.10.04'}
+      responses: {'200': {description: Ranking por margen, riesgo y compatibilidad}}
+  /budget/transfer-scenario:
+    post:
+      summary: Escenario de traslado origen–destino entre centros de costo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceCode, destinationCode, amount]
+              properties:
+                profileId: {type: string}
+                sourceCode: {type: string, example: '1.10.05'}
+                destinationCode: {type: string, example: '1.10.04'}
+                amount: {type: number, example: 0.30}
+      responses: {'200': {description: Antes/después, impacto POI, banderas, procedimiento y reglas}}
+  /templates:
+    get:
+      summary: Plantillas documentales según función del servidor
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: personId, required: true, schema: {type: string}}
+      responses: {'200': {description: Informes, oficios, memorandos y plantillas funcionales}}
+  /reports:
+    get:
+      summary: Catálogo de reportes imprimibles/exportables
+      responses: {'200': {description: Catálogo}}
+  /procedure:
+    get:
+      summary: Flujo explicable y normas de referencia
+      parameters:
+        - {in: query, name: topic, schema: {type: string, example: presupuesto}}
+      responses: {'200': {description: Pasos y base normativa}}
+  /investments:
+    get:
+      summary: Cartera de inversiones físico-financiera
+      responses: {'200': {description: CUI, PIM, físico, financiero, tiempo, contrato, brecha e hitos}}
+  /procurements:
+    get:
+      summary: Requerimientos y contrataciones
+      responses: {'200': {description: Cadena logística, etapa, monto y riesgo}}
+  /expedients:
+    get:
+      summary: Expedientes, rutas y plazos
+      responses: {'200': {description: Ruta esperada/real y alertas}}
+  /assets:
+    get:
+      summary: Control patrimonial
+      responses: {'200': {description: Bienes, regularización, mantenimiento e incidencias}}
+  /processes:
+    get:
+      summary: Procesos, SLA y cuellos de botella
+      responses: {'200': {description: Seguimiento de procesos}}
+  /norms:
+    get:
+      summary: Normativa de referencia
+      responses: {'200': {description: Normas y efecto funcional}}
+  /assistant/query:
+    post:
+      summary: Asistente contextual con explicación, acción y dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [profileId, query]
+              properties:
+                profileId: {type: string}
+                query: {type: string}
+                route: {type: string}
+                context: {type: object}
+      responses: {'200': {description: Métricas, explicación, recomendaciones, navegación y dashboard contextual}}
+  /search:
+    get:
+      summary: Búsqueda global institucional
+      parameters:
+        - {in: query, name: profileId, schema: {type: string}}
+        - {in: query, name: q, required: true, schema: {type: string}}
+      responses: {'200': {description: Personas, unidades, centros, inversiones, contrataciones y expedientes}}
